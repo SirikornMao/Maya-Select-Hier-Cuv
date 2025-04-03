@@ -1,53 +1,53 @@
 import maya.cmds as cmds
 
-# ฟังก์ชันสำหรับเลือก curve ที่อยู่ในกลุ่ม
+# Function for selecting curves that are in the groups
 def select_hierarchy_curves(groups):
     all_curves = []
     
-    # สำหรับทุกๆ group ที่ได้รับ
+    # For every group that receivesd
     for group_name in groups:
-        # หา children ที่เป็น curve ภายใน group
+        # Find children who are curves within the group
         curves_in_group = cmds.listRelatives(group_name, children=True, type='transform')
         
         if curves_in_group:
             for curve in curves_in_group:
-                # ตรวจสอบว่าเป็น nurbsCurve (curve) หรือไม่
+                # Check if it's nurbsCurve (curve)
                 if cmds.objectType(curve) == 'transform' and cmds.listRelatives(curve, type='nurbsCurve'):
                     all_curves.append(curve)
 
-    # เลือก curve ทั้งหมดที่พบ
+    # Select all curves found
     if all_curves:
         cmds.select(all_curves)
     else:
-        print("ไม่พบ curve ในกลุ่มที่ระบุ")
+        print("No curve found in the specified group")
 
-# ฟังก์ชันสร้าง UI ที่สามารถ custom ชื่อกลุ่มและจำนวนกลุ่มได้
+# Create a UI that can customize the group name and number of groups
 def create_ui():
     if cmds.window("selectCurveWindow", exists=True):
         cmds.deleteUI("selectCurveWindow", window=True)
 
-    # สร้างหน้าต่าง UI
+    # Create UI Window
     window = cmds.window("selectCurveWindow", title="Select Hierarchy Curves", widthHeight=(400, 300))
 
     cmds.columnLayout(adjustableColumn=True)
     
-    # ส่วนกรอกชื่อกลุ่มและจำนวนกลุ่ม
-    cmds.text(label="กรอกชื่อ Group และ Curve ตามจำนวนที่ต้องการ:")
+    # Fill in the group name and number of groups
+    cmds.text(label="Fill in the required number of Group and Curve names:")
 
-    # ตัวแปรเพื่อเก็บจำนวนกลุ่มที่ต้องการ
-    num_groups_field = cmds.intField(value=5)  # ใช้ intField แทน label
+    # variable to store the desired number of groups
+    num_groups_field = cmds.intField(value=5)  # Use intField instead of label
     
-    # ส่วนสำหรับเก็บข้อมูลกลุ่มและ curve
+    # Sections for collecting group and curve data
     group_names = []
     curve_names = []
     group_fields = []
     curve_fields = []
     
-    # ฟังก์ชันสร้างช่องกรอกกลุ่มและ curve
+    # Function to create group and curve fields
     def update_group_ui(*args):
         nonlocal group_fields, curve_fields
         
-        # ลบช่องกรอกเดิมออก
+        # Delete the original fields if they exist
         if group_fields:
             for field in group_fields:
                 cmds.textFieldGrp(field, edit=True, text="")
@@ -61,38 +61,38 @@ def create_ui():
         
         num_groups = cmds.intField(num_groups_field, q=True, value=True)
         
-        # สร้างช่องกรอกชื่อ group และ curve ตามจำนวนที่กำหนด
+        # Create a certain number of fields to fill in the group and curve names
         for i in range(num_groups):
             group_field = cmds.textFieldGrp(label=f"Group {i + 1}", text="")
             curve_field = cmds.textFieldGrp(label=f"Curve {i + 1} for Group {i + 1}", text="")
             group_fields.append(group_field)
             curve_fields.append(curve_field)
 
-    # อัพเดต UI เมื่อมีการเปลี่ยนแปลงจำนวนกลุ่ม
+    # Update the UI when the number of groups changes
     cmds.intField(num_groups_field, edit=True, changeCommand=update_group_ui)
     
-    # สร้างปุ่มสำหรับเลือก curve ที่อยู่ใน group ที่กรอกไว้
+    # Create a button for selecting curves in the group that you have filled in
     def on_select_button_clicked(*args):
         selected_groups = []
         
-        # รับค่าจากช่องกรอกชื่อกลุ่ม
+        # Get the value from the group name fields and curve name fields
         for group_field, curve_field in zip(group_fields, curve_fields):
             group_name = cmds.textFieldGrp(group_field, q=True, text=True)
             curve_name = cmds.textFieldGrp(curve_field, q=True, text=True)
             
-            if group_name and curve_name:  # ถ้ามีชื่อกรอกเข้ามา
+            if group_name and curve_name:  # If your name is filled in
                 selected_groups.append(group_name)
         
-        # เรียกฟังก์ชันสำหรับเลือก curve ในกลุ่มที่เลือก
+        # Invoke the function for selecting curves in the selected groups
         select_hierarchy_curves(selected_groups)
     
-    # ปุ่มสำหรับเลือก curve
+    # Button for selecting curves
     cmds.button(label="Select Curves", command=on_select_button_clicked)
 
-    # อัพเดต UI เบื้องต้น
+    # Initial UI Updates
     update_group_ui()
     
     cmds.showWindow(window)
 
-# เรียกใช้งาน UI
+# Run UI
 create_ui()
